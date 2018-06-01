@@ -1,2 +1,2 @@
-# QTIP
-Quadrotor Topped Inverted Pendulum
+# Quadrotor Topped Inverted Pendulum (QTIP)
+
