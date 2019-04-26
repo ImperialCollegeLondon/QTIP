@@ -1,38 +1,16 @@
-/*
-===Contact & Support===
-Website: http://eeenthusiast.com/
-Youtube: https://www.youtube.com/EEEnthusiast
-Facebook: https://www.facebook.com/EEEnthusiast/
-Patreon: https://www.patreon.com/EE_Enthusiast
-Revision: 1.0 (July 13th, 2016)
-===Hardware===
-- Arduino Uno R3
-- MPU-6050 (Available from: http://eeenthusiast.com/product/6dof-mpu-6050-accelerometer-gyroscope-temperature/)
-===Software===
-- Latest Software: https://github.com/VRomanov89/EEEnthusiast/tree/master/MPU-6050%20Implementation/MPU6050_Implementation
-- Arduino IDE v1.6.9
-- Arduino Wire library
-===Terms of use===
-The software is provided by EEEnthusiast without warranty of any kind. In no event shall the authors or 
-copyright holders be liable for any claim, damages or other liability, whether in an action of contract, 
-tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in 
-the software.
-*/
-
 #include <I2Cdev.h>
 #include <Servo.h>
 #include <I2C.h>
 #include <MPU6050_6Axis_MotionApps20.h>
 #include <Wire.h>
 
-
 MPU6050 mpu;
 
 #define ACCELEROMETER_SENSITIVITY 16384.0
 #define GYROSCOPE_SENSITIVITY 131.0
+
 #define SCL A5
 #define SDL A4
-
 #define INTERRUPT_PIN 10  // use pin 2 on Arduino Uno & most boards
 
 // MPU control/status vars
@@ -182,7 +160,6 @@ void processDMPdata(){
     else if (mpuIntStatus & 0x02) {
         // wait for correct available data length, should be a VERY short wait
         while (fifoCount < packetSize) fifoCount = mpu.getFIFOCount();
-        
         
         // read a packet from FIFO
         mpu.getFIFOBytes(fifoBuffer, packetSize);
