@@ -8,9 +8,9 @@ MPU6050 mpu;
 
 #define ACCELEROMETER_SENSITIVITY 16384.0
 #define GYROSCOPE_SENSITIVITY 131.0
-#define SCL 21
-#define SDL 20
-#define INTERRUPT_PIN 19  // use pin 2 on Arduino Uno & most boards
+#define SCL A5
+#define SDA A4
+#define INTERRUPT_PIN 10  // use pin 2 on Arduino Uno & most boards
 
 
 // MPU control/status vars
@@ -23,18 +23,18 @@ uint8_t fifoBuffer[64]; // FIFO storage buffer
 
 // orientation/motion vars
 Quaternion q;           // [w, x, y, z]         quaternion container
-VectorInt16 aa;         // [x, y, z]            accel sensor measurements
-VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
-VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
+//VectorInt16 aa;         // [x, y, z]            accel sensor measurements
+//VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
+//VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
 VectorFloat gravity;    // [x, y, z]            gravity vector
-float euler[3];         // [psi, theta, phi]    Euler angle container
+//float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 
 // Initialise the angle variables for complementary filter
-long double accelX, accelY, accelZ, accData[3];
-float gForceX, gForceY, gForceZ;
-long double gyroX, gyroY, gyroZ, gyrData[3];
-float rotX, rotY, rotZ;
+//long double accelX, accelY, accelZ, accData[3];
+//float gForceX, gForceY, gForceZ;
+//long double gyroX, gyroY, gyroZ, gyrData[3];
+//float rotX, rotY, rotZ;
 
 // Initialise the roll pitch yaw variables
 float roll = 0;
@@ -51,9 +51,9 @@ double dRollErr, rollError, dRoll, dPitchErr, pitchError, dPitch;
 double lastRoll = 0;
 double lastPitch = 0;
 unsigned long timeChange = 0;
-const float RADIANS_TO_DEGREES = 57.2958;
-unsigned long prevMillis = 0;
-float dt;
+//const float RADIANS_TO_DEGREES = 57.2958;
+//unsigned long prevMillis = 0;
+//float dt;
 
 
 // ESC initialised
@@ -86,7 +86,8 @@ void dmpDataReady() {
 }
 
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
   setupMPU();
   SetTunings(41,0.0005,8000);// Stable @1000 Minspeed
@@ -95,17 +96,21 @@ void setup() {
 }
 
 
-void loop() {
+void loop()
+{
   if(lastTime<endTime){
     processDMPdata();
     feedbackLoop();
     exportData();
     //printData();
   }
-  else{turnOff();}
+  else{
+    turnOff();
+  }
 }
 
-void turnOff(){ // Turns off the motors after 'endTime' milliseconds. Can then restart the test with new gains or the same.
+void turnOff()
+{ // Turns off the motors after 'endTime' milliseconds. Can then restart the test with new gains or the same.
   firstESC.write(0);
   secondESC.write(0);
   thirdESC.write(0);
@@ -136,7 +141,8 @@ void turnOff(){ // Turns off the motors after 'endTime' milliseconds. Can then r
   pitchErrSum=0;
 }
 
-void exportData(){ // Print data in a format for plotting
+void exportData()
+{ // Print data in a format for plotting
       Serial.print(lastTime);
       Serial.print(",");
       Serial.print(ypr[0]*180/M_PI);
@@ -155,7 +161,8 @@ void exportData(){ // Print data in a format for plotting
 */
 }
 
-void setupMPU(){ // Setup MPU6050 using the DMP.
+void setupMPU()
+{ // Setup MPU6050 using the DMP.
     // join I2C bus (I2Cdev library doesn't do this automatically)
      I2c.begin();
      I2c.timeOut(50); 
@@ -213,11 +220,12 @@ void setupMPU(){ // Setup MPU6050 using the DMP.
 }
 
 
-void setupESC(){ // Setup ESCs for top motors.
-  firstESC.attach(10);
-  secondESC.attach(11);
-  thirdESC.attach(12);
-  fourthESC.attach(13);
+void setupESC()
+{ // Setup ESCs for top motors.
+  firstESC.attach(3); // orig 10
+  secondESC.attach(5); // orig 11
+  thirdESC.attach(6); // orig 12
+  fourthESC.attach(9); // orig 13
   while (!Serial);
     
   firstESC.writeMicroseconds(value);
@@ -236,12 +244,13 @@ void setupESC(){ // Setup ESCs for top motors.
   Serial.println("Flag");
 }
 
-void processDMPdata(){ // Process angle data from the DMP sensor fusion.
+void processDMPdata()
+{ // Process angle data from the DMP sensor fusion.
 // if programming failed, don't try to do anything
     if (!dmpReady) return;
 
     // wait for MPU interrupt or extra packet(s) available
-    if (!mpuInterrupt && fifoCount < packetSize) //{do something;}
+    //if (!mpuInterrupt && fifoCount < packetSize) //{do something;}
 
     // reset interrupt flag and get INT_STATUS byte
     mpuInterrupt = false;
@@ -254,12 +263,12 @@ void processDMPdata(){ // Process angle data from the DMP sensor fusion.
     if ((mpuIntStatus & 0x10) || fifoCount == 1024 || fifoCount % 42 != 0) {
         // reset so we can continue cleanly
         mpu.resetFIFO();
+    }
     // otherwise, check for DMP data ready interrupt (this should happen frequently)
-    } else if (mpuIntStatus & 0x02) {
+    else if (mpuIntStatus & 0x02) {
         // wait for correct available data length, should be a VERY short wait
         while (fifoCount < packetSize) fifoCount = mpu.getFIFOCount();
-        
-        
+
         // read a packet from FIFO
         mpu.getFIFOBytes(fifoBuffer, packetSize);
 
@@ -275,8 +284,8 @@ void processDMPdata(){ // Process angle data from the DMP sensor fusion.
 }
 
 
-void feedbackLoop(){ // Control feedback goes in here.
-  
+void feedbackLoop()
+{ // Control feedback goes in here.
    /*How long since we last calculated*/
    unsigned long now = millis() - timeBegin;
    timeChange = now - lastTime;
@@ -339,7 +348,6 @@ void feedbackLoop(){ // Control feedback goes in here.
    lastPitch = pitch;
    //lastPitchErr = pitchError;
    lastTime = now;
-  
 }
 
 // Set the PID gains.
@@ -350,8 +358,8 @@ void SetTunings(double Kp, double Ki, double Kd)
    kd = Kd;
 }
 
-void printData() {
-
+void printData()
+{
   /*
   Serial.print("ypr\t");
   Serial.print(ypr[0] * 180/M_PI);
