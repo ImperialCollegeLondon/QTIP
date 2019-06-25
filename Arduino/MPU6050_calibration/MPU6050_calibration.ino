@@ -34,7 +34,7 @@
 // I2Cdev and MPU6050 must be installed as libraries
 #include "I2Cdev.h"
 #include "MPU6050.h"
-#include "I2C.h"
+#include "Wire.h"
 
 ///////////////////////////////////   CONFIGURATION   /////////////////////////////
 //Change this 3 variables if you want to fine tune the skecth to your needs.
@@ -57,8 +57,9 @@ int ax_offset,ay_offset,az_offset,gx_offset,gy_offset,gz_offset;
 ///////////////////////////////////   SETUP   ////////////////////////////////////
 void setup() {
   // join I2C bus (I2Cdev library doesn't do this automatically)
-  I2c.begin();
-  I2c.timeOut(100);
+  Wire.begin();
+  // COMMENT NEXT LINE IF YOU ARE USING ARDUINO DUE
+  TWBR = 24; // 400kHz I2C clock (200kHz if CPU is 8MHz). Leonardo measured 250kHz.
 
   // initialize serial communication
   Serial.begin(115200);
@@ -104,7 +105,7 @@ void loop() {
     Serial.println("\nCalculating offsets...");
     calibration();
     state++;
-    delay(500);
+    delay(1000);
   }
 
   if (state==2) {
@@ -188,19 +189,8 @@ void calibration(){
     accelgyro.setYGyroOffset(gy_offset);
     accelgyro.setZGyroOffset(gz_offset);
 
-    Serial.println("...");
-    Serial.print("\nSensor readings with offsets:\t");
-    Serial.print(mean_ax); 
-    Serial.print("\t");
-    Serial.print(mean_ay); 
-    Serial.print("\t");
-    Serial.print(mean_az); 
-    Serial.print("\t");
-    Serial.print(mean_gx); 
-    Serial.print("\t");
-    Serial.print(mean_gy); 
-    Serial.print("\t");
-    Serial.println(mean_gz);
+    meansensors();
+    Serial.println("..");
 
     if (abs(mean_ax)<=acel_deadzone) ready++;
     else ax_offset=ax_offset-mean_ax/acel_deadzone;
