@@ -1,1 +1,0 @@
-Be aware that the signal ground cable coming from one of the ESCs is faulty (not grounding properly) and may need replacing.
